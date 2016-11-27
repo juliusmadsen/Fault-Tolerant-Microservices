@@ -3,6 +3,7 @@ from flask import Flask, request
 from werkzeug.exceptions import NotFound
 import json
 import requests
+from shared import CircuitBreaker
 
 app = Flask(__name__)
 
