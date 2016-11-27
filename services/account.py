@@ -3,6 +3,8 @@ from flask import Flask, request
 from werkzeug.exceptions import NotFound
 import json
 import redis
+import random
+import time
 
 app = Flask(__name__)
 
@@ -31,6 +33,7 @@ def account_update(accountId):
 
 @app.route("/account/<accountId>", methods=['GET'])
 def account_get(accountId):
+    time.sleep(random.randint(1,11)/10 + 0.1)
     data = r.hgetall("user:" + accountId)
     return nice_json(data)
     

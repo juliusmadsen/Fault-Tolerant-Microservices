@@ -6,6 +6,12 @@ import requests
 
 app = Flask(__name__)
 
+def doGet(path):
+    return requests.get(path, timeout=0.9)
+
+def doPut(path, payload):
+    return requests.put(path, timeout=0.9, json=payload)
+
 @app.route("/", methods=['PUT'])
 def stock_update():
     req = request.get_json(force=True)
@@ -14,13 +20,13 @@ def stock_update():
     stockName = req['stockName']
     amount = int(req['amount'])
 
-    accountData = requests.get("http://localhost:5001/account/" + str(accountId)).json()
+    accountData = doGet("http://localhost:5001/account/" + str(accountId)).json()
     balance = int(accountData['balance'])
     stockHolding = 0
     if 'stocks:' + stockName in accountData:
         stockHolding = int(accountData['stocks:' + stockName])
     
-    quote = int(requests.get("http://localhost:5002/stock/" + str(stockName)).json()['quote'])
+    quote = int(doGet("http://localhost:5002/stock/" + str(stockName)).json()['quote'])
 
     if amount > 0 and balance < amount*quote:
         res = {'success': False, 'message': "Not enough funds to buy."}
@@ -28,8 +34,7 @@ def stock_update():
         res = {'success': False, 'message': "Not enough shares owned to sell."}
     else:
         payload = { "amount": -1*amount*quote, "stock": {"name": stockName, "amount": amount} }
-        update = requests.put("http://localhost:5001/account/" + str(accountId),
-                              json = payload)
+        update = doPut("http://localhost:5001/account/" + str(accountId), payload)
         res = update.json()
     
     return nice_json(res)
