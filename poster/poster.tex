@@ -1,0 +1,119 @@
+% Borrowed from ShareLatex: https://www.sharelatex.com/templates/52fb8fb833621a613683ecbf
+\documentclass{sciposter}
+
+\usepackage{epsfig}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multicol}
+\usepackage{lipsum}
+%\usepackage{fancybullets}
+
+\newtheorem{Def}{Definition}
+
+\definecolor{BoxCol}{rgb}{0.9,0.9,0.9}
+% uncomment for grey background to \section boxes 
+% for use with default option boxedsections
+
+%\definecolor{BoxCol}{rgb}{0.9,0.9,1}
+% uncomment for light blue background to \section boxes 
+% for use with default option boxedsections
+
+%\definecolor{SectionCol}{rgb}{0,0,0.5}
+% uncomment for dark blue \section text 
+
+
+\title{Fault-Tolerant Microservice Architectures}
+
+% Note: only give author names, not institute
+\author{Julius T. Madsen (s000000), Stephan T. Larsen (s146907)}
+ 
+% insert correct institute name
+\institute{Technical University of Denmark}
+
+\email{julius.madsen@gmail.com, stephan@thordal.io}  % shows author email address below institute
+
+%\date is unused by the current \maketitle
+
+
+% The following commands can be used to alter the default logo settings
+%\leftlogo[0.9]{logoWenI}{  % defines logo to left of title (with scale factor)
+%\rightlogo[0.52]{RuGlogo}  % same but on right
+
+% NOTE: This will require presence of files logoWenI.eps and RuGlogo.eps, 
+% or other supported format in the current directory  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Begin of Document
+
+
+
+\begin{document}
+%define conference poster is presented at (appears as footer)
+
+\conference{{\bf Poster Day 2016}, Fault-Tolerant Systems (02228), Fall 2016}
+
+%\LEFTSIDEfootlogo  
+% Uncomment to put footer logo on left side, and 
+% conference name on right side of footer
+
+% Some examples of caption control (remove % to check result)
+
+%\renewcommand{\algorithmname}{Algoritme} % for Dutch
+
+%\renewcommand{\mastercapstartstyle}[1]{\textit{\textbf{#1}}}
+%\renewcommand{\algcapstartstyle}[1]{\textsc{\textbf{#1}}}
+%\renewcommand{\algcapbodystyle}{\bfseries}
+%\renewcommand{\thealgorithm}{\Roman{algorithm}}
+
+\maketitle
+
+%%% Begin of Multicols-Enviroment
+\begin{multicols}{3}
+
+%%% Abstract
+\begin{abstract}
+\lipsum[1]
+\end{abstract}
+
+%%% Introduction
+\section{Introduction}
+
+\PARstart{M}{icroservice architectures} 
+\lipsum[1-2]
+
+\section{Architecture}
+\lipsum[1]
+
+\section{Technologies}
+\lipsum[1]
+
+\section{Mechanisms}
+\subsection{Timeouts}
+\lipsum[1]
+
+\subsection{Circuit Breakers}
+\lipsum[1]
+
+\subsection{Bulk Heads}
+\lipsum[1]
+
+\section{Evaluation}
+\lipsum[1-2]
+
+%%% References
+
+%% Note: use of BibTeX als works!!
+
+\bibliographystyle{plain}
+\begin{thebibliography}{1}
+
+\bibitem{Flusser:Suk:93}
+J.~Flusser and T.~Suk.
+\newblock Pattern recognition by affine moment invariants.
+\newblock {\em Pattern Recognition}, 26:167--174, 1993.
+
+\end{thebibliography}
+
+\end{multicols}
+
+\end{document}
+
