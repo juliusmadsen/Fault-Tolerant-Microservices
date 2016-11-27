@@ -15,10 +15,11 @@ install: clean venv
 	. venv/bin/activate; python2 setup.py develop
 
 launch: venv shutdown
-	. venv/bin/activate; python2  services/movies.py &
-	. venv/bin/activate; python2  services/showtimes.py &
-	. venv/bin/activate; python2  services/bookings.py &
-	. venv/bin/activate; python2  services/user.py &
+	. venv/bin/activate; python2  services/account.py &
+	#. venv/bin/activate; python2  services/movies.py &
+	#. venv/bin/activate; python2  services/showtimes.py &
+	#. venv/bin/activate; python2  services/bookings.py &
+	#. venv/bin/activate; python2  services/user.py &
 
 shutdown:
 	#ps -ef | grep "services/movies.py" | grep -v grep | awk '{print $$2}' | xargs kill  

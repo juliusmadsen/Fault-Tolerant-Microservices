@@ -3,7 +3,6 @@ from flask import Flask
 from werkzeug.exceptions import NotFound
 import json
 
-
 app = Flask(__name__)
 
 with open("{}/database/showtimes.json".format(root_dir()), "r") as f:
