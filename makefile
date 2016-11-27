@@ -16,6 +16,8 @@ install: clean venv
 
 launch: venv shutdown
 	. venv/bin/activate; python2  services/account.py &
+	. venv/bin/activate; python2  services/stocks.py &
+	. venv/bin/activate; python2  services/trader.py &
 	#. venv/bin/activate; python2  services/movies.py &
 	#. venv/bin/activate; python2  services/showtimes.py &
 	#. venv/bin/activate; python2  services/bookings.py &

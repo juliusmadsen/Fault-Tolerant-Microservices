@@ -9,19 +9,30 @@ app = Flask(__name__)
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 @app.route("/account/<accountId>", methods=['PUT'])
-def account_put(accountId):
-    amount = request.get_json()['amount']
-    newAmount = r.hincrby("user:" + accountId, "amount", amount)
-    return nice_json({
-        "amount": newAmount
-    })
+def account_update(accountId):
+    req = request.get_json(force=True)
+    res = {"updated": False}
+    
+    if 'amount' in req:
+        amount = req['amount']
+        balance = r.hincrby("user:" + accountId, "balance", amount)
+        res['balance'] = balance
+        res['updated'] = True
+
+    if 'stock' in req:
+        stock = req['stock']
+        name = stock['name']
+        amount = stock['amount']
+        stockBalance = r.hincrby("user:" + accountId, "stocks:" + name, amount)
+        res['stock'] = {name: stockBalance}
+        res['updated'] = True
+        
+    return nice_json(res)
 
 @app.route("/account/<accountId>", methods=['GET'])
 def account_get(accountId):
-    amount = r.hget("user:" + accountId, "amount")
-    return nice_json({
-        "amount": amount
-    })
+    data = r.hgetall("user:" + accountId)
+    return nice_json(data)
     
 if __name__ == "__main__":
     app.run(port=5001, debug=True, threaded=True)
