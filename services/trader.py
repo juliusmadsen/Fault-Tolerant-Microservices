@@ -1,7 +1,7 @@
 from services import root_dir, nice_json
 from flask import Flask, request
 from werkzeug.exceptions import NotFound
-from shared import CircuitBreaker
+from shared.CircuitBreaker import CircuitBreaker
 import json
 import requests
 import threading
@@ -11,28 +11,35 @@ app = Flask(__name__)
 max_connections = 5
 
 account_sema = threading.BoundedSemaphore(value=max_connections)
+account_circuit = CircuitBreaker("account", 2, 1)
+
 stock_sema = threading.BoundedSemaphore(value=max_connections)
 
 def getAccount(accountId):
     account_sema.acquire()
-    res = requests.get("http://localhost:5001/account/" + str(accountId), timeout=0.9)
+    res = account_circuit.call(lambda:
+                               requests.get("http://localhost:5001/account/" + str(accountId),
+                                            timeout=0.9))
     account_sema.release()
     return res.json()
 
 def getStock(stockName):
     stock_sema.acquire()
-    res = requests.get("http://localhost:5002/stock/" + str(stockName), timeout=0.9)
+    res = account_circuit.call(lambda:
+                               requests.get("http://localhost:5002/stock/" + str(stockName),
+                                            timeout=0.9))
     stock_sema.release()
     return res.json()
 
 def updateAccount(accountId, amount, stockName, stockAmount):
     payload = { "amount": amount, "stock": {"name": stockName, "amount": stockAmount} }
     account_sema.acquire()
-    update = requests.put("http://localhost:5001/account/" + str(accountId),
-                          timeout=0.9,
-                          json=payload).json()
+    res = account_circuit.call(lambda:
+                               requests.put("http://localhost:5001/account/" + str(accountId),
+                                            timeout=0.9,
+                                            json=payload))
     account_sema.release()
-    return update
+    return res.json()
 
 @app.route("/", methods=['PUT'])
 def stock_update():
