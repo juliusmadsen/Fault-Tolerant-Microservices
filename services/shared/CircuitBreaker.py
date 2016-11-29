@@ -16,6 +16,7 @@ class CircuitBreaker(object):
     # Circuit events
     
     def __init__(self, name, fail_max, reset_timeout):
+        print "initializing circuit!"
         self.state = self.CLOSED
         self.tries = 0
         self.name = name

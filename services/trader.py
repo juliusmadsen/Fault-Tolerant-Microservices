@@ -8,14 +8,18 @@ import threading
 
 app = Flask(__name__)
 
-max_connections = 5
+max_connections = 3
 
 account_sema = threading.BoundedSemaphore(value=max_connections)
-account_circuit = CircuitBreaker("account", 2, 1)
+account_circuit = CircuitBreaker("account", 3, 1)
 
 stock_sema = threading.BoundedSemaphore(value=max_connections)
+stock_circuit = CircuitBreaker("stock", 3, 1)
 
 def getAccount(accountId):
+    global account_sema
+    global account_circuit
+    
     account_sema.acquire()
     res = account_circuit.call(lambda:
                                requests.get("http://localhost:5001/account/" + str(accountId),
@@ -24,14 +28,20 @@ def getAccount(accountId):
     return res.json()
 
 def getStock(stockName):
+    global stock_sema
+    global stock_circuit
+
     stock_sema.acquire()
-    res = account_circuit.call(lambda:
-                               requests.get("http://localhost:5002/stock/" + str(stockName),
-                                            timeout=0.9))
+    res = stock_circuit.call(lambda:
+                             requests.get("http://localhost:5002/stock/" + str(stockName),
+                                          timeout=0.9))
     stock_sema.release()
     return res.json()
 
 def updateAccount(accountId, amount, stockName, stockAmount):
+    global account_sema
+    global account_circuit
+
     payload = { "amount": amount, "stock": {"name": stockName, "amount": stockAmount} }
     account_sema.acquire()
     res = account_circuit.call(lambda:
@@ -42,10 +52,7 @@ def updateAccount(accountId, amount, stockName, stockAmount):
     return res.json()
 
 @app.route("/", methods=['PUT'])
-def stock_update():
-    global account_sema
-    global stock_sema
-    
+def stock_update():    
     req = request.get_json(force=True)
     
     accountId = req['accountId']
