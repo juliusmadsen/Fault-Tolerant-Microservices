@@ -12,6 +12,9 @@ r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 @app.route("/account/<accountId>", methods=['PUT'])
 def account_update(accountId):
+    sleep_duration = random.randint(0,10)/100.0
+    time.sleep(sleep_duration)
+
     req = request.get_json(force=True)
     res = {"updated": False}
     
@@ -33,7 +36,8 @@ def account_update(accountId):
 
 @app.route("/account/<accountId>", methods=['GET'])
 def account_get(accountId):
-    time.sleep(random.randint(0,30)/10)
+    sleep_duration = random.randint(0,10)/100.0
+    time.sleep(sleep_duration)
     data = r.hgetall("user:" + accountId)
     return nice_json(data)
     
