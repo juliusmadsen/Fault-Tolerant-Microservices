@@ -33,7 +33,7 @@ def account_update(accountId):
 
 @app.route("/account/<accountId>", methods=['GET'])
 def account_get(accountId):
-    time.sleep(random.randint(1,110)/10 + 0.1)
+    time.sleep(random.randint(0,10)/10)
     data = r.hgetall("user:" + accountId)
     return nice_json(data)
     
