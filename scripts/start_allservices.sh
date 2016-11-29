@@ -1,9 +1,10 @@
+#!/bin/bash
 # Trader service
 docker service create \
 	--network swarm_net \
 	--name trader \
 	--replicas 1 \
-	--publish 5003 \
+	--publish 5003:5003 \
 	sthordall/microtrader:latest \
 	python services/trader.py
 
