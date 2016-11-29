@@ -1,4 +1,5 @@
 import datetime as dt
+import sys
 
 class CircuitOpenError(Exception):
     def __init__(self, value = ""):
@@ -15,6 +16,7 @@ class CircuitBreaker(object):
     # Circuit events
     
     def __init__(self, name, fail_max, reset_timeout):
+        print "initializing circuit!"
         self.state = self.CLOSED
         self.tries = 0
         self.name = name
@@ -49,12 +51,13 @@ class CircuitBreaker(object):
     def call(self, func):
         if self.state == self.CLOSED:
             try:
-                func()
+                res = func()
                 self.success()
             except:
+                print "Unexpected error:", sys.exc_info()[0]
                 self.fail()
                 if self.state == self.CLOSED:
-                    self.call(func) # Calling again
+                    res = self.call(func) # Calling again
                 else:
                     self.reset_timer_start = dt.datetime.now()
                     raise CircuitOpenError()
@@ -65,7 +68,7 @@ class CircuitBreaker(object):
             if self.reset_timeout <= (dt.datetime.now() - self.reset_timer_start).total_seconds():
                 try:
                     self.reset()
-                    func()
+                    res = func()
                     self.success()
                 except:
                     self.fail()
@@ -76,9 +79,10 @@ class CircuitBreaker(object):
 
         elif self.state == self.HALFOPEN:
             try:
-                func()
+                res = func()
                 self.success()
             except:
                 self.fail()
                 self.reset_timer_start = dt.datetime.now()
                 raise CircuitOpenError()
+        return res

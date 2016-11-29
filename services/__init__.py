@@ -12,3 +12,7 @@ def nice_json(arg):
     response = make_response(json.dumps(arg, sort_keys = True, indent=4))
     response.headers['Content-type'] = "application/json"
     return response
+
+def error_response(subject):
+    response = make_response(subject + " is unavailable", 503)
+    return response
