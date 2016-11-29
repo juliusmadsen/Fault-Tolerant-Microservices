@@ -3,8 +3,8 @@
 docker service create \
 	--network swarm_net \
 	--name trader \
+	--endpoint-mode dnsrr \
 	--replicas 1 \
-	--publish 5003:5003 \
 	sthordall/microtrader:latest \
 	python services/trader.py
 
@@ -39,4 +39,3 @@ docker service create \
 	--name account-db \
 	--replicas 1 \
 	redis:latest
-

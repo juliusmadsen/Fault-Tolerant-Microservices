@@ -1,7 +1,2 @@
 #!/bin/bash
-SERVICES=($(docker service ls -q))
-
-for service in "${SERVICES[@]}"
-do
-	docker service scale $service=$1
-done
+docker service scale account=$1 stocks=$1 trader=$1
