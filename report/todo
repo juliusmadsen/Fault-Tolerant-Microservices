@@ -1,0 +1,22 @@
+Stephan:
+- Microservice Architectures
+- Mechanisms
+	- Circuitbreaker
+	- Replication
+	- Redundancy
+- Implementation
+	- Circuitbreaker
+	- Replication
+	- Redundancy
+	- Clustering and Containers
+
+Julius:
+- Architecture
+- Mechanisms
+	- Timeout
+	- Bulkheads
+- Implementation
+	- Timeout
+	- Bulkheads
+- Evaluation/Test
+- Further Work
