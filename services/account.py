@@ -8,7 +8,7 @@ import time
 
 app = Flask(__name__)
 
-r = redis.StrictRedis(host='account-db', port=6379, db=0)
+r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 @app.route("/account/<accountId>", methods=['PUT'])
 def account_update(accountId):
@@ -42,5 +42,5 @@ def account_get(accountId):
     return nice_json(data)
     
 if __name__ == "__main__":
-    app.run(port=5001, host="0.0.0.0", debug=True, threaded=True)
+    app.run(port=5001, host="localhost", debug=True, threaded=True)
 
