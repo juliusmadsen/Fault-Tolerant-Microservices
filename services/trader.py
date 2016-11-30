@@ -25,7 +25,7 @@ def getAccount(accountId):
     
     account_sema.acquire()
     res = account_circuit.call(lambda:
-                               requests.get("http://account:5001/account/" + str(accountId),
+                               requests.get("http://localhost:5001/account/" + str(accountId),
                                             timeout=request_timeout))
     account_sema.release()
     return res.json()
@@ -37,7 +37,7 @@ def getStock(stockName):
     
     stock_sema.acquire()
     res = stock_circuit.call(lambda:
-                             requests.get("http://stocks:5002/stock/" + str(stockName),
+                             requests.get("http://localhost:5002/stock/" + str(stockName),
                                           timeout=request_timeout))
     stock_sema.release()
     return res.json()
@@ -50,7 +50,7 @@ def updateAccount(accountId, amount, stockName, stockAmount):
     payload = { "amount": amount, "stock": {"name": stockName, "amount": stockAmount} }
     account_sema.acquire()
     res = account_circuit.call(lambda:
-                               requests.put("http://account:5001/account/" + str(accountId),
+                               requests.put("http://localhost:5001/account/" + str(accountId),
                                             timeout=request_timeout,
                                             json=payload))
     account_sema.release()
@@ -102,5 +102,5 @@ def stock_update():
     return nice_json(res)
 
 if __name__ == "__main__":
-    app.run(port=5003, host="0.0.0.0", debug=True, threaded=True)
+    app.run(port=5003, host="localhost", debug=True, threaded=True)
 
