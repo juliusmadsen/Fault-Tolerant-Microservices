@@ -8,13 +8,19 @@ echo "Starting $TOTALINSTANCES instances in virtualbox:"
 for n in $(seq 1 $MANAGERS)
 do
 	echo " Starting manager-$n in virtualbox..."
-	docker-machine create --driver "virtualbox" "manager-$n" >> /dev/null
+	docker-machine create \
+		--driver "virtualbox" \
+		--virtualbox-hostonly-cidr "10.11.12.1/24" \
+		"manager-$n" >> /dev/null
 done
 
 for n in $(seq 1 $WORKERS)
 do
 	echo " Starting worker-$n in virtualbox..."
-	docker-machine create --driver "virtualbox" "worker-$n" >> /dev/null
+	docker-machine create \
+		--driver "virtualbox" \
+		--virtualbox-hostonly-cidr "10.11.12.1/24" \
+		"worker-$n" >> /dev/null
 done
 
 echo "Initializing swarm on manager-1..."
