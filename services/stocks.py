@@ -8,7 +8,7 @@ import time
 
 app = Flask(__name__)
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
+r = redis.StrictRedis(host='stocks-db', port=6379, db=0)
 
 @app.route("/stock/<stockName>", methods=['PUT'])
 def stock_update(stockName):
@@ -32,5 +32,5 @@ def stock_quote(stockName):
     })
     
 if __name__ == "__main__":
-    app.run(port=5002, debug=True, threaded=True)
+    app.run(port=5002, host="0.0.0.0", debug=True, threaded=True)
 
