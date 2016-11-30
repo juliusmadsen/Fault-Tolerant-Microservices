@@ -49,10 +49,14 @@ def updateAccount(accountId, amount, stockName, stockAmount):
     
     payload = { "amount": amount, "stock": {"name": stockName, "amount": stockAmount} }
     account_sema.acquire()
-    res = account_circuit.call(lambda:
-                               requests.put("http://localhost:5001/account/" + str(accountId),
-                                            timeout=request_timeout,
-                                            json=payload))
+    #res = account_circuit.call(lambda:
+    #                           requests.put("http://localhost:5001/account/" + str(accountId),
+    #                                        timeout=request_timeout,
+    #                                        json=payload))
+    res = requests.put("http://localhost:5001/account/" + str(accountId),
+                       timeout=request_timeout,
+                       json=payload)
+
     account_sema.release()
     return res.json()
 
