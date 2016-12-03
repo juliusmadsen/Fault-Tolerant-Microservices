@@ -55,6 +55,27 @@ machine in Figure~\ref{fig:circuitbreakerstate}.
 
 \subsection{Replication}
 % Replication of stateless services, split workload
+One key principle of microservices, is the componentization of software in
+independent services. If they are implemented in a stateless manner, only
+persisting state in databases, the independent services can be replicated and
+function side-by-side, hereby splitting the system load. Which in many cases
+might also minimize errors, since overloading a service could cause faults.
+Beyond allowing a service to be scaled horizontally, replication also allows
+for increased fault-tolerance, since the failure of a single instance does not
+necessarily result in breaking the system, since other identical replicated
+services are still running. The key goal being that at least one instance of the
+service is alive, reachable and well-behaved.
+\newline\newline
+Replication can enhance fault-tolerance even more, if it is applied on a cluster
+of servers. Replicating services across a cluster, spreading replicas to
+different nodes, lets the system handle sudden disconnects or downtime on
+individual nodes. This mentality can even be applied on datacenters and the
+cloud, where a single system might run replicated on datacenters and clouds
+from different providers and across different regions.
+\newline\newline
+Another benefit of replication is the ability to deploy a new version of a
+service one replica at a time. This allows for evaluation of its performance
+in a system and quick rollback if faults are encountered, with no downtime.
 
 \subsection{Redundancy}
 % Multiple hosts and services ready for fail-over
