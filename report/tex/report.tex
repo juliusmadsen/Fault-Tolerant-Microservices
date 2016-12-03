@@ -17,6 +17,15 @@
 \usepackage{listings}
 \usepackage{footnote}
 
+% Bibliography (references)
+\usepackage[backend=biber,
+            style=numeric,
+            %backref=true,
+            abbreviate=false,
+            dateabbrev=false,
+            alldates=long]{biblatex}
+\addbibresource{bibliography.bib}
+
 \newcommand*\rot{\rotatebox{90}}
 
 \begin{document}
@@ -33,4 +42,5 @@
 \input{implementation}
 \input{evaluation}
 \input{conclusion}
+\printbibliography
 \end{document}

@@ -2,5 +2,6 @@
 # Requires latexmk
 
 cd tex
-latexmk -pdf report.tex
-latexmk -c # cleans temp files
+latexmk -pdf report
+latexmk -c
+

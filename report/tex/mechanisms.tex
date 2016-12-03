@@ -1,17 +1,55 @@
 \section{Fault-Tolerance Mechanisms}
+This section covers some mechanisms which can improve fault-tolerance in
+microservice architectures. Their functionality and intended purpose will
+be covered in this section, and their implementation will be covered in 
+Section~\ref{sec:implementation}.
 
 \subsection{Timeouts}
 
 \subsection{Bulkheads}
 
 \subsection{Circuit Breaker}
+Since microservices typically rely on networked interprocess communication,
+there is a risk of calls between them failing or hanging with no timely
+response.
+If a service relies on another service which starts failing, resulting in not
+responding and letting requests hang, the requesting service can waste its
+resources on threads waiting for responses. Other than affecting the requesting
+services interaction with the failing service, it might also take its resources
+from serving its own functionality to other services. This can result in
+cascading failures throughout a system~\cite{fowler2014blog}.
+Failures can be anything from requests timing out, $5xx HTTP$ responses to
+overflowing message queues. 
+\newline\newline
+The \textit{Circuit Breaker} pattern was introduced by Michael
+Nygard~\cite{nygard2007release}, and solves the problem of resource exhaustion
+caused by requests to failing services, by failing quickly if it is observed
+that requests to a service fail frequently. 
+This is achieved by wrapping all calls/requests to a service in a
+\textit{circuit breaker} object, which monitors the interaction for continuous
+number of failures. 
+If the number of failing requests reach some predefined threshold, the circuit
+is opened. 
+\newline\newline
+When in the \textit{open} state, requests will fail immediately instead of being
+forwarded, hereby minimizing the number of threads waiting for responses and
+allowing the requested service to recover from whatever has caused it to fail.
+After some defined timeout, the circuit will transition to a \textit{half-open}
+state, where requests will be let through to the service, to see if it functions
+again. If it functions as expected, the circuit will be opened again, if not it
+will go back to its \textit{closed} state again. This is illustrated as a state
+machine in Figure~\ref{fig:circuitbreakerstate}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{../media/CircuitBreakerState.pdf} 
-\caption{State machine representing the \textit{Circuit Breaker} state. The
-	circuit can be the states \textit{Closed}, \textit{Open} or 
-	\textit{Half-Open}.}
+\includegraphics[width=0.7\textwidth]{../media/CircuitBreakerState.pdf} 
+\caption{State machine representing the \textit{circuit breaker}. The
+	circuit can be in states \textit{closed}, \textit{open} or \textit{half-open}.
+	The circuit will transition to its \textit{open} state if number of continuous
+	failures reach a predefined threshold. Circuit will be in \textit{closed}
+	state until it reaches a timeout where it will reset itself to the
+	\textit{half-open} state, from where it will either transition to
+	\textit{closed} if a request succeeds or to \textit{open} if a request fails.}
 \label{fig:circuitbreakerstate}
 \end{figure}
 
