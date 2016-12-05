@@ -5,6 +5,101 @@ covered in Section~\ref{sec:mechanisms} on the architecture described in
 Section~\ref{sec:architecture}.
 
 \subsection{Circuit Breaker}
+The circuit breaker has been implemented as a state-machine, with the
+circuits state being stored in a local variable and events being functions.
+Calls are executed by the circuit breakers $call(func)$ function, which takes
+an anonymous function, executes it, monitors for failures, returns result if
+successful, tries again if not and raises $CircuitOpenError$ if number of
+failures reach defined max. The implementation of $call(func)$ can be found in
+Listing~\ref{lst:circuitbreakercall} and an example of invocation can be found
+in Listing~\ref{lst:circuitbreakerinvocation}.
+\\\\
+The circuit breakers maximum number of failures, $fail\_max$, and the duration
+of its reset timeout, $reset\_timeout$, can be configured. These can be used for
+fine-tuning the circuit breaker to the service it is associated with. 
+\\\\
+This implementation of a circuit breaker is very simple, since it only acts on
+the function it is handed. If the function raises an error/exception it is
+interpreted as a failure and if it executes as expected, it interprets it as a
+success. Alternative approaches could be to fail on exhaustion of thread pool
+or overflowing message queues.
+\\\\
+The system utilizes the circuit breaker only in the \textit{trader} service,
+from the \textit{trader} service to both \textit{account} service and 
+\textit{stock} service, resulting in two circuit breakers, one circuit breaker
+per service dependency. Circuit breaker states are local to instances of the 
+\textit{trader}.
+
+\begin{lstlisting} [
+	language=python,
+	caption={Example of invocation of the circuit breaker $call$ function, from
+		the \textit{trader} service to the \textit{account} service. The anonymous
+			function is wrapped in a Python $lambda$ expression.},
+	breaklines=true,
+	label={lst:circuitbreakerinvocation}]
+res = account_circuit.call(
+		lambda: requests.get("http://account:5001/account/" + str(accountId),
+			timeout=request_timeout))
+\end{lstlisting}
+
+\begin{lstlisting} [
+	language=python,
+	caption={The implemented \textit{Circuit Breakers} wrapper function, named
+		$call$. The function takes an anonymous function (in python a $lambda$
+				expression), invokes it if the circuit is closed and generates the
+			events which will trigger a state change according to the state machine
+			described in Figure~\ref{fig:circuitbreakerstate}. The anonymous function
+			will be called repeatedly until it either succeeds or reaches the defined
+			maximum of failures and opens the circuit. If the circuit is
+			open, the anonymous function will not be invoked, but the circuit will
+			fail quickly instead, unless the reset-timeout has been reached which
+			will allow the function to be called in order to test if the called
+			service is functioning as expected again.},
+	breaklines=true,
+	label={lst:circuitbreakercall}]
+def call(self, func):
+	# Closed Circuit
+	if self.state == self.CLOSED:
+		try:
+			res = func()
+			self.success()
+		except:
+			self.log("Unexpected error:", sys.exc_info()[0])
+			self.fail()
+			if self.state == self.CLOSED:
+				res = self.call(func) # Calling again
+			else:
+				self.reset_timer_start = dt.datetime.now()
+				raise CircuitOpenError()
+							
+	# Open Circuit
+	elif self.state == self.OPEN:
+		self.log("Reset time is at: " + str((dt.datetime.now() -
+			self.reset_timer_start).total_seconds()))
+		if self.reset_timeout <= (dt.datetime.now()
+					- self.reset_timer_start).total_seconds():
+			try:
+				self.reset()
+				res = func()
+				self.success()
+			except:
+				self.fail()
+				self.reset_timer_start = dt.datetime.now()
+				raise CircuitOpenError()
+		else:
+			raise CircuitOpenError()
+
+	# Half-Open Circuit
+	elif self.state == self.HALFOPEN:
+		try:
+			res = func()
+			self.success()
+		except:
+			self.fail()
+			self.reset_timer_start = dt.datetime.now()
+			raise CircuitOpenError()
+	return res
+\end{lstlisting}
 
 \subsection{Replication}
 
