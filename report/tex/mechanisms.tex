@@ -1,4 +1,4 @@
-\section{Fault-Tolerance Mechanisms}
+\section{Fault-Tolerance Mechanisms}\label{sec:mechanisms}
 Microservices often depend on other microservices in order to
 operate correctly. However, it is important to create each
 microservice as an independent unit as opposed to viewing it as part
@@ -133,6 +133,20 @@ necessarily result in breaking the system, since other identical replicated
 services are still running. The key goal being that at least one instance of the
 service is alive, reachable and well-behaved.
 \newline\newline
+Replication can be complex if a service holds state, if data needs to be
+synchronized across replicated databases or if replicas share resources.
+All require a replication strategy that services can base their cooperation on
+in order to achieve synchronized state, no corrupted data and no deadlocking or
+long waits.
+Replication strategies, as covered in the article \textit{The dangers of
+replication and a solution}~\cite{gray1996dangers}, might involve solutions
+such as timestamps on transactions, \textit{eager} and \textit{lazy} replication
+of state across replicas or \textit{master/slave} hierarchies. A strategy should
+be chosen based on a systems requirements, types of nodes and data.
+In case of the demo system showcased in this report, a simple strategy of
+keeping services state-less and using a shared transaction-safe database will
+be applied, see Section~\ref{sec:implementation}.
+\newline\newline
 Replication can enhance fault-tolerance even more, if it is applied on a cluster
 of servers. Replicating services across a cluster, spreading replicas to
 different nodes, lets the system handle sudden disconnects or downtime on
@@ -146,7 +160,24 @@ in a system and quick rollback if faults are encountered, with no downtime.
 
 \subsection{Redundancy}
 % Multiple hosts and services ready for fail-over
-
-\subsection{Resilience}
-% Self healing of Docker Swarm orchestration
-
+Much related to replication is redundancy. Redundancy engineering in general
+applies duplicated redundant components ready to take over, if the main
+component should fail. Replication offers some sort redundancy, since nodes are
+ready to takeover, but all duplicates are active. This is known as
+\textit{Active/Active} failover.
+\\\\
+In \textit{Active/Active} failover, all duplicated nodes function side by side,
+and if one fails the other nodes are ready to take over the failed nodes
+workload. This might require clients of the failed node to resubmit failed
+requests, which then could be handled by the other active nodes. When the failed
+node has recovered it can be brought into service again and get its old clients
+assigned again.
+\\\\
+An alternative redundancy failover scheme is \textit{Active/Passive}, where
+duplicates are passive until the primary node fails. When the primary node
+fails, all resources and clients are transferred to the passive redundant node,
+which can resume as the new active primary node. This might also require clients
+to resubmit their failed requests. When the failed node comes back online,
+either it becomes the new passive node or it is handed its resources and clients
+back, making it the active node again with the duplicate redundant node becoming
+passive.

@@ -1,9 +1,9 @@
 Stephan:
 - Microservice Architectures
-- Mechanisms
+x Mechanisms
 	x Circuitbreaker
-	- Replication
-	- Redundancy
+	x Replication
+	x Redundancy
 - Implementation
 	- Circuitbreaker
 	- Replication
