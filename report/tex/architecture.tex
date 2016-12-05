@@ -1,2 +1,131 @@
 \section{Architecture}
-% Cover architecture of dummy system
+As a means of implementing a display of fault tolerance techniques a
+minimal microservice architecture has been implemented. The
+architecture is neither realistic nor complete but provides a useful
+base to implement and test the discussed fault tolerance techniques.
+
+\subsection{Overview}
+The example microservice architecture consist of a basic banking
+system and is comprised of three microservices:
+
+\begin{itemize}
+\item \textbf{The account service} in which account data can be
+  created, updated and fetched. An account consists of an account ID,
+  a balance and a list of owned stocks.
+\item \textbf{The stock service} in which stock prices can be
+  retrieved and updated.
+\item \textbf{The trader service} in which stock trades are carried
+  out. When a trade is requested the account service is contacted to
+  get account data for the account in question  and the stocks service
+  is contacted to get the price of the stock in question. If the
+  transaction is valid in terms of enough funds or stocks owned in the
+  account to perform a trade, the account service is contacted once
+  again to perform the actual trade by updating the account balance
+  and the amount of owned stocks.
+\end{itemize}
+
+\subsection{Implementation}
+Each microservice is implemented as a REST
+API~\cite{fielding2000dissertation} in Python by use of the Flask
+framework~\cite{flask}. Data is stored in a Redis database~\cite{redis}.
+\\\\
+All communication to and between the services are performed through
+HTTP GET and POST requests with JSON as the data format. The are five
+implemented endpoints:
+
+\begin{itemize}
+\item \textbf{GET /account/<accountID>}
+  \\\\
+  Returns the account balance and a list of all stocks owned by the
+  account with ID <accountID> in JSON:
+  \\\\
+    \textit{
+    \{
+    balance: <balance>,
+    stocks:
+    [
+      \{
+      stockName: <stockName>,
+      amount: <amount>
+      \}
+    ]
+    \}
+  }.
+\item \textbf{POST /account/<accountID>} with \emph{JSON} body
+  \textit{
+    \{
+      amount: <balanceDiff>,
+      stock:
+        \{
+          name: <name>,
+          amount: <amount>
+        \}
+    \}
+  }
+  \\\\
+  Updates the account with ID <accountID> by adding <balanceDiff> to
+  the account balance and/or adding <amount> to the number of stocks with
+  name <name> already owned.
+  \\\\
+  Returns a JSON object of the form
+  \textit {
+    \{
+      updated: True,
+      balance: <balance>,
+      stock:
+        \{
+          <stockName>: <stockAmount>
+        \}
+    \}
+  }
+  if the input data is accepted or simply
+  \textit{
+    \{ updated: False \}
+  }
+  if the input data is rejected.
+\item \textbf{GET /stock/<stock name>}
+  \\\\
+  Returns a JSON object of the form \textit{
+    \{ quote: <quote> \}
+  } where <quote> is the stock quote for the stock with name <stock name>.
+\item \textbf{POST /stock/<stock name>} with \emph{JSON} body \{ price:
+  <price> \}.
+  \\\\
+  Sets the price of <stock name> to <price>.
+  \\\\
+  Returns a JSON object of the form \textit{
+    \{ success: <Bool> \}
+  } with <Bool> being True on success and False on failure.
+\item \textbf{POST /trade} with \emph{JSON} body \{ accountId: <accountId>, stockName:
+  <stockName>, amount: <amount> \}.
+  \\\\
+  Requests a stock trade for account with ID <accountID> to buy or
+  sell <amount> shares of stock with name <stockName>.
+  \\\\
+  Returns a JSON object of the form
+  \textit {
+    \{
+      updated: True,
+      balance: <balance>,
+      stock:
+        \{
+          <stockName>: <stockAmount>
+        \}
+    \}
+  }
+  if successfull or
+    \textit {
+    \{
+      success: False,
+      message: <message>
+    \}
+  }
+  on failure with <message> being the reason for the failure.
+
+\end{itemize}
+
+The implementation of this microservice architecture has been carried
+out with fault-tolerance in mind and thus only serves the purpose of
+showcasing fault-tolerance techniques. No form of authentication or
+security has been implemented, yielding a very artificial and
+unrealistic banking system.
