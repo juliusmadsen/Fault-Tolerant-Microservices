@@ -7,15 +7,15 @@ Section~\ref{sec:architecture}.
 \subsection{Circuit Breaker}
 The circuit breaker has been implemented as a state-machine, with the
 circuits state being stored in a local variable and events being functions.
-Calls are executed by the circuit breakers $call(func)$ function, which takes
+Calls are executed by the circuit breakers \texttt{call(func)} function, which takes
 an anonymous function, executes it, monitors for failures, returns result if
-successful, tries again if not and raises $CircuitOpenError$ if number of
-failures reach defined max. The implementation of $call(func)$ can be found in
+successful, tries again if not and raises \texttt{CircuitOpenError} if number of
+failures reach defined max. The implementation of \texttt{call(func)} can be found in
 Listing~\ref{lst:circuitbreakercall} and an example of invocation can be found
 in Listing~\ref{lst:circuitbreakerinvocation}.
 \\\\
-The circuit breakers maximum number of failures, $fail\_max$, and the duration
-of its reset timeout, $reset\_timeout$, can be configured. These can be used for
+The circuit breakers maximum number of failures, \texttt{fail\_max}, and the duration
+of its reset timeout, \texttt{reset\_timeout}, can be configured. These can be used for
 fine-tuning the circuit breaker to the service it is associated with. 
 \\\\
 This implementation of a circuit breaker is very simple, since it only acts on
@@ -32,9 +32,9 @@ per service dependency. Circuit breaker states are local to instances of the
 
 \begin{lstlisting} [
 	language=python,
-	caption={Example of invocation of the circuit breaker $call$ function, from
+	caption={Example of invocation of the circuit breaker \texttt{call} function, from
 		the \textit{trader} service to the \textit{account} service. The anonymous
-			function is wrapped in a Python $lambda$ expression.},
+			function is wrapped in a Python \texttt{lambda} expression.},
 	breaklines=true,
 	label={lst:circuitbreakerinvocation}]
 res = account_circuit.call(
@@ -45,7 +45,7 @@ res = account_circuit.call(
 \begin{lstlisting} [
 	language=python,
 	caption={The implemented \textit{Circuit Breakers} wrapper function, named
-		$call$. The function takes an anonymous function (in python a $lambda$
+		\texttt{call}. The function takes an anonymous function (in python a \texttt{lambda}
 				expression), invokes it if the circuit is closed and generates the
 			events which will trigger a state change according to the state machine
 			described in Figure~\ref{fig:circuitbreakerstate}. The anonymous function
@@ -101,6 +101,180 @@ def call(self, func):
 	return res
 \end{lstlisting}
 
+\subsection{Containers}
+Each of the three microservices are implemented to run within \textit{Linux
+Containers}, utilizing the \textit{Docker} platform. They all run within the
+same \textit{Docker image}, specified in the \textit{Dockerfile} found in
+Listing~\ref{lst:dockerfile} and on \textit{Docker Hub} under the name
+\textit{sthordall/microtrader}~\cite{microtraderimage}. The images extends the
+official \textit{python:2.7.12} image and exposes the needed ports, adds the
+source code, builds it and accepts a command to start the wanted service.
+\\\\
+A service is started with the \textit{Docker} orchestration tooling, and the
+whole system can be brought up with the script found in
+Listing~\ref{lst:startallservices}. The script results in the architecture
+shown in Figure~\ref{fig:containerarchitecture}. A reverse proxy based on
+\textit{NGINX} has been setup to forward requests to the services, allowing for
+a single point of invocation.
+
+\begin{lstlisting} [
+	language=docker,
+	caption={Dockerfile defining Linux container image, which all three services
+		run within.},
+	breaklines=true,
+	label={lst:dockerfile}]
+FROM python:2.7.12
+
+EXPOSE 5001 5002 5003
+
+ADD . /service
+WORKDIR /service
+
+RUN python setup.py install
+\end{lstlisting}
+
+
+\begin{lstlisting} [
+	language=bash,
+	caption={Script for starting microservice architecture in the linux container
+	orchestration tool \textit{Docker Swarm}. The resulting architecture consists
+	of the three services, \texttt{trader}, \texttt{stocks} and \texttt{account}, their associated
+	databases \texttt{stocks-db} and \texttt{account-db}. Furthermore a reverse proxy has been
+	setup to forward requests to the three services, \texttt{proxy}, allowing for a 
+	single point of invocation. All three services are started with no
+	replication, i.e.\ a single instance per service, but are ready to be scaled,
+	utilizing \textit{DNS Round Robin} load balancing. All services interact
+		through the virtual network called \texttt{swarm\_net}, and the \texttt{proxy} exposes port
+	80 to external network.},
+	breaklines=true,
+	label={lst:startallservices}]
+#!/bin/bash
+# Trader service
+docker service create \
+	--network swarm_net \
+	--name trader \
+	--endpoint-mode dnsrr \
+	--replicas 1 \
+	sthordall/microtrader:latest \
+	python services/trader.py
+
+# Stocks service
+docker service create \
+	--network swarm_net \
+	--name stocks \
+	--endpoint-mode dnsrr \
+	--replicas 1 \
+	sthordall/microtrader:latest \
+	python services/stocks.py
+
+# Stocks-DB
+docker service create \
+	--network swarm_net \
+	--name stocks-db \
+	--replicas 1 \
+	redis:latest
+
+# Account service
+docker service create \
+	--network swarm_net \
+	--name account \
+	--endpoint-mode dnsrr \
+	--replicas 1 \
+	sthordall/microtrader:latest \
+	python services/account.py
+
+# Account-DB
+docker service create \
+	--network swarm_net \
+	--name account-db \
+	--replicas 1 \
+	redis:latest
+
+# NGINX Proxy
+docker service create \
+	--network swarm_net \
+	--name proxy \
+	--replicas 1 \
+	--publish 80:80 \
+	sthordall/traderproxy:latest
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{../media/container_architecture.pdf} 
+\caption{The resulting architecture from running script in
+	Listing~\ref{lst:startallservices}. The proxy forwards requests to the three
+		services, which can be replicated to $n$ instances. Load balancing is done
+		with \textit{DNS Round Robin}. Databases and proxy are not expected to
+		replicate.}
+\label{fig:containerarchitecture}
+\end{figure}
+
 \subsection{Replication}
+Replication has been implemented by utilizing the Linux container orchestration
+and clustering tooling in \textit{Docker}. \textit{Docker} manages the
+services, or rather the containers they run within, across a cluster created
+with \textit{Docker Swarm}. It handles domain names, load balancing, restarting
+of failed services and virtual networking. The cluster used for testing
+consists of 4 nodes, 2 acting as managers and 2 acting as workers. 
+\\\\
+When the services have been started with the script from 
+Listing~\ref{lst:startallservices}, they can be seen running spread across the
+cluster, with the command \texttt{docker service ps <service-name>}, example of the
+output can be seen in Figure~\ref{fig:serviceps}. Replication can either be
+defined as part of the \texttt{--replicas} option when starting a service, see
+Listing~\ref{lst:startallservices}, or after the fact with the \texttt{docker service scale
+SERVICE=REPLICAS}. Service replicas are spread across the cluster, see
+Figure~\ref{fig:serviceps}, with \textit{Docker} trying to spread each service to as
+many nodes as possible.
+\\\\
+Load is balanced across the replicas, by use of \textit{DNS Round Robin}, which
+translates DNS requests to differing host IPs, e.g.\ for each request to host
+\texttt{account} the host-name is translated to a different replica.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../media/serviceps.png} 
+\caption{Output from \texttt{docker service ps <service-name>} on all services
+	in cluster. The \texttt{trader}, \texttt{account} and \texttt{stock} services
+  have been scaled to 5 replicas, which are spread so each service runs on as
+	many nodes as possible.}
+\label{fig:serviceps}
+\end{figure}
 
 \subsection{Redundancy}
+Redundancy has mainly been implemented using clustering with \textit{Docker Swarm}
+and \textit{Active/Active} failover in the form of replication. The cluster
+consists of 4 virtual machines, each running \textit{Docker Engine}, with 2
+assigned as \textit{managers} and 2 assigned as \textit{workers}.
+A manager node handles the orchestration of services across the cluster,
+ensuring that the services run in the defined number of replicas and that if a
+node goes down, its services are transferred to another node. A demonstration
+of this can be seen in Figure~\ref{fig:servicefailover}
+\\\\
+This system has a single redundant manager \texttt{manager\_2}, which runs in
+\textit{Active/Passive} failover, ready to take over as manager should 
+\texttt{manager\_1} die, as demonstrated in Figure~\ref{fig:manager1leader}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../media/servicefailover.png} 
+\caption{Demonstration of cluster node failover. The node 
+	\texttt{worker\_2} is stopped, and the services previously running within it,
+		are restarted on another node.}
+\label{fig:servicefailover}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.49\textwidth]{../media/manager1leader.png} 
+\includegraphics[width=0.49\textwidth]{../media/manager2leader.png} 
+\caption{Output from running the \texttt{docker node ls} command, showing the nodes
+		participating in the cluster and their status. The cluster is setup with
+		two managers and two workers. If the \texttt{manager\_1} fails, \texttt{manager\_2} takes
+		over. This involves restarting the services that ran within \texttt{manager\_1},
+		across the other nodes. On the left \texttt{manager\_1} is leader, the
+		VM with \texttt{manager\_1} was restarted, resulting in \texttt{manager\_2}
+		becoming leader, seen on the right. }
+\label{fig:manager1leader}
+\end{figure}
