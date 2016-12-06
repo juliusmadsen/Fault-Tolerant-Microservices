@@ -1,2 +1,124 @@
-\section{Evaluation and Testing}
-% Benchmarks and showcase of self-healing abilities
+\section{Evaluation}
+Fault tolerance techniques can be implemented for different
+purposes. Some microservices want the biggest possible thoughput at
+the cost of an increased number of failure, others want the highest
+possible success rate and accept low performance. For many purposes it
+can be desirable to aim somewhere in between these two extremes.
+\\\\
+Pretend that the fictive bank behind the implemented trading service
+charges a fee for each succesful trade. Given the number of processed
+request per second, $r$, and the failure rate, $f$, it is then in the
+interest of the bank to customise the fault tolerance setup such that
+their income from fees, $p$, are maximised. Thus, the goal is to
+configure the fault tolerance parameters such that $p = max(r *
+1-r)$.
+
+\subsection{Introducing failure and test setup}
+To be able to show the effects of the different implemented fault
+tolerance techniques, the microservice architecture must deliberatly
+contain some failures. These are introduced throughout this section in
+connection to the relevant fault tolerance technique.
+\\\\
+As an underlying assumption it is assumed that the bank receives a
+constant flow of 50 concurrent trade requests. The aim of the bank is
+to process these requests in a way that optimises their profit.
+\\\\
+The system is tested by using the Apache HTTP server benchmarking
+tool~\cite{apache} to generate 5000 trade request to the trading
+service at a concurrency level of 50.
+
+\subsection{Timeouts}
+Real world applications are unstable due to slow networks and
+databases among many other things. To simulate some kind of
+unstability, random sleeps are introduced to the GET method in the
+account service. The implementation is shown in
+Listing~\ref{pythonsleeps}. This introduces a not completely
+unrealistic behaviour of a real world microservice, where the response
+time is generally noisy and some requests are responded to slowly.
+\begin{lstlisting} [
+	language=python,
+	caption={On average 1 percent of the requests will sleep for 10 seconds,
+          4 percent of the requests will sleep for 5 seconds and 18
+          percent of the requests will sleep for 1
+          second. Furthermore, all requests sleep for a random value
+          between 0 and 0,1 seconds.},
+	breaklines=true,
+	label={lst:pythonsleeps}]
+lucky = random.randint(0,100) 
+if lucky == 100:
+    time.sleep(10)
+elif lucky > 95:
+    time.sleep(5)
+elif lucky > 80:
+    time.sleep(1)
+sleep_duration = random.randint(0,10)/100.0
+\end{lstlisting}
+The benchmark test was performed on the trader service with the
+results displayed in Table~\ref{table:baselinetest}. The profit in the
+base case is 67.51 successful requests per second and this is is the
+number to be maximised.
+
+\begin{table}[]
+\centering
+\caption{Baseline performance of trader service with no fault
+  tolerance enabled. Success is the percentage of successfull requests
+and profit/sec is derived by multiplying this with the number of
+requests per second. 50\% of all requests finished in 313ms and no
+requests took more than 10347ms.}
+\label{table:baselinetest}
+\begin{tabular}{|l|l|l|l|l|l|l|l|}
+\hline
+Requests/seq & Success & Profit/sec & 50\% & 75\% & 90\% & 95\% & 100\% \\ \hline
+67.51 & 100\% & 67.51 & 313ms & 1239ms & 1239ms & 5097ms & 10347ms\\ \hline
+\end{tabular}
+\end{table}
+Looking at Table~\ref{table:baselinetest} it shows that the slowest
+ten percent of the requests are dramatically more slow than the rest
+of the requests. Based on this it seems sensible to set a first
+attempt maximum timeout of 2 seconds, which should exclude somewhere
+between 5 to 10 percent of the requests with the benefit of not
+slowing down the rest of the requests. The results of doing so are
+listed in Table~\ref{table:timeouttest2sec} which shows 85.86
+successful requests per second yielding a profit increase of 27\%.
+
+\begin{table}[]
+\centering
+\caption{Performance of trader service with timeout set to 2 seconds.}
+\label{table:timeouttest2sec}
+\begin{tabular}{|l|l|l|l|l|l|l|l|}
+\hline
+Requests/seq & Success & Profit/sec & 50\% & 75\% & 90\% & 95\% & 100\% \\ \hline
+89.52 & 95.8\% & 85.76 & 342ms & 445ms & 1343ms & 1499ms & 2256ms\\ \hline
+\end{tabular}
+\end{table}
+There still seems to be room for improvement though so a timeout of 1
+second is tried with the test results shown in
+Table~\ref{table:timeouttest1sec}. This results show a decrease in
+successful requests per second indicating that this timeout might be
+too aggressive for this system.
+\begin{table}[]
+\centering
+\caption{Performance of trader service with timeout set to 1 second.}
+\label{table:timeouttest1sec}
+\begin{tabular}{|l|l|l|l|l|l|l|l|}
+\hline
+Requests/seq & Success & Profit/sec & 50\% & 75\% & 90\% & 95\% & 100\% \\ \hline
+104.34 & 81.44\% & 84.97 & 346ms & 438ms & 1087ms & 1119ms & 1456ms\\ \hline
+\end{tabular}
+\end{table}
+Obiously it would be easy to set the perfect timeout for the
+microservice architecture implemented here, as the underlying random
+sleeps are known. For real uses this is not the case leaving only log
+files and server statistics to be investigated.
+
+Note how the maximum runtime in both Table~\ref{table:timeouttest2sec}
+and Table~\ref{table:timeouttest1sec} is greater than the timeout that
+was being benchmarked. This is due to the fact that it is not the
+trader service itself which times out but the requests from the trader
+service to other services. Two requests from the trader service to the
+account service can each take 0.9 seconds, thus avoiding the timeout
+limits and adding 1.8 seconds to the total runtime of the trader service.
+
+\subsection{Circuit breakers}
+
+\subsection{Bulkheads}
