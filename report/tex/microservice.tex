@@ -19,7 +19,7 @@ domain and communicates with associated parts of the domain through a common
 \textit{context}, mapping data to domain concepts. This should ideally result
 in a system that is easy to reason about since it mimics the way a specific
 domain functions. Grouping associated domain responsibilities in a service,
-results in \textit{high cohesion}.
+results in \textit{high cohesion}~\cite{fowlermicroservices}.
 Aligning service development to the domain, results in teams composed of
 varying technical capabilities, but builds domain expertise inside a team.
 \\\\
@@ -32,17 +32,17 @@ services interface.
 \\\\
 Decentralization extends to deployment and environments as well. Microservice
 architectures gained traction when operating system level virtualization was
-popularized through the open source project \textit{Docker}.
+popularized through the open source project \textit{Docker}~\cite{docker}.
 \textit{Docker} utilizes the Linux kernel feature of \textit{Linux Containers},
 which allows isolation of processes in a seemingly full-blown operating system.
 Linux containers use the hosts operating system kernel and other linux features
 such as \textit{cgroups} to create an isolated environment, but with almost no
-overhead compared to running processes natively on the OS. 
+overhead compared to running processes natively on the operating system. 
 This achieves per service isolation which is way more efficient compared to typical
 hypervisor virtualization and virtual machines, where each environment requires
 a full operating system and dedicated slices of the hardware, see
 Figure~\ref{fig:hypervisorvscontainer}. Each service hereby has its own
-environment, and thinks it runs in its own operating system.
+environment, and thinks it runs in its own operating system~\cite{docker}.
 \\\\
 \begin{figure}[H]
 \centering
@@ -62,4 +62,5 @@ containers, and even provides other features such as clustering mechanisms, i.e.
 the internals of a container, these are called images and are defined in a
 \textit{Dockerfile}. These images can be shared on \textit{Docker Hub}.
 This project will utilize Linux containers on the \textit{Docker} platform,
-across a cluster managed by \textit{Docker Swarm}.
+across a cluster managed by \textit{Docker
+Swarm}~\cite{docker,dockerhub,dockerswarm}.
