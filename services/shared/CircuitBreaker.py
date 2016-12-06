@@ -49,12 +49,13 @@ class CircuitBreaker(object):
             self.state = self.OPEN; self.log("state: " + self.state)
 
     def call(self, func):
+        # Closed Circuit
         if self.state == self.CLOSED:
             try:
                 res = func()
                 self.success()
             except:
-                print "Unexpected error:", sys.exc_info()[0]
+                self.log("Unexpected error:", sys.exc_info()[0])
                 self.fail()
                 if self.state == self.CLOSED:
                     res = self.call(func) # Calling again
@@ -62,10 +63,12 @@ class CircuitBreaker(object):
                     self.reset_timer_start = dt.datetime.now()
                     raise CircuitOpenError()
                     
+        # Open Circuit
         elif self.state == self.OPEN:
-            print "Reset time is at: " + str((dt.datetime.now() -
-                self.reset_timer_start).total_seconds())
-            if self.reset_timeout <= (dt.datetime.now() - self.reset_timer_start).total_seconds():
+            self.log("Reset time is at: " + str((dt.datetime.now() -
+                self.reset_timer_start).total_seconds()))
+            if self.reset_timeout <= (dt.datetime.now()
+                    - self.reset_timer_start).total_seconds():
                 try:
                     self.reset()
                     res = func()
@@ -77,6 +80,7 @@ class CircuitBreaker(object):
             else:
                 raise CircuitOpenError()
 
+        # Half-Open Circuit
         elif self.state == self.HALFOPEN:
             try:
                 res = func()
