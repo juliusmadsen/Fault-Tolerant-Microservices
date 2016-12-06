@@ -13,13 +13,15 @@ their income from fees, $p$, are maximised. Thus, the goal is to
 configure the fault tolerance parameters such that $p = max(r *
 1-r)$.
 
-\subsection{Introducing failure and test setup}
+\subsection{Test setup}
 To be able to show the effects of the different implemented fault
-tolerance techniques, the microservice architecture must deliberatly
-contain some failures. These are introduced throughout this section in
-connection to the relevant fault tolerance technique.
+tolerance techniques, the microservice architecture must fail in
+various ways. One failure is deliberatly implemented to show the power
+of timeouts but the current setup is too contrived to effectively
+making the services fail in suitable ways for bulkheads and circuit
+breakers to serve their intended purpose.
 \\\\
-As an underlying assumption it is assumed that the bank receives a
+For testing purposed it is assumed that the bank receives a
 constant flow of 50 concurrent trade requests. The aim of the bank is
 to process these requests in a way that optimises their profit.
 \\\\
@@ -110,7 +112,7 @@ Obiously it would be easy to set the perfect timeout for the
 microservice architecture implemented here, as the underlying random
 sleeps are known. For real uses this is not the case leaving only log
 files and server statistics to be investigated.
-
+\\\\
 Note how the maximum runtime in both Table~\ref{table:timeouttest2sec}
 and Table~\ref{table:timeouttest1sec} is greater than the timeout that
 was being benchmarked. This is due to the fact that it is not the
@@ -120,5 +122,32 @@ account service can each take 0.9 seconds, thus avoiding the timeout
 limits and adding 1.8 seconds to the total runtime of the trader service.
 
 \subsection{Circuit breakers}
+Circuit breakers comes in to effect in situations where a called
+service gets overloaded. When that happens the circuit breaker makes
+sure no more requests are passed through for a timeout period,
+allowing the requested service to recover. To apply this to the
+example microservice architecture would require that either the
+account service or the stock service displayed symptoms of being
+overloaded. The pure random sleeps does not adequately simulate this
+situation, as there is no coherence between the sleep time of two
+separate requests to the account service.
+\\\\
+This behaviour could be implemented by increasing the probability of a
+long sleep after a long sleep has just occured, but it would be even
+more artificial than the existing sleep mechanism and require a lot of
+parameter tweaking to be useful for testing purposes.
 
 \subsection{Bulkheads}
+Bulkheads are effectively managing the number of threads concurrently
+occupied by requesting other services. Testing of these would require
+extensive knowledge and monitoring of the availability and use of
+threads by each microservice. Such information is not easily
+accessible in the high-level libraries used for this
+implementation. It could be pursued further but doing so would lead
+into working on implementation details that are not directly relevant
+for the topics presented here.
+\\\\
+An alternative solution to test bulkheads would be to simulate thread
+exhaustion by keeping track of the number of simultaneous requests but
+this would again be very contrived and not hardly reflect the effects
+of implementing bulkheads in a real microservice architecture.
