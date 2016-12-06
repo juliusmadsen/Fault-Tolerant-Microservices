@@ -40,17 +40,17 @@ will quickly block all available threads. Once again incoming requests
 will be queued and no results are returned.
 \\\\
 The solution to this is to include timeouts between service
-interactions - in this case on all requests from the trader service to
-both the account service and the stock service. The timeouts should be
-aggressive in order to fail quickly and avoid a queue building up. If
-the account service typically replies in 1 second, a timeout of 0.5
-seconds would result in virtually no trades being accepted. However, a
-timeout of 5 seconds might be too long as it takes too long to react
-to the account service failing. Thus, the timeouts must be set
-individually for each interaction between services and it should be
-such that most requests succeed when all services function normally
-and cascading failure is avoided when one or more services are
-failing.
+interactions~\cite{avanza} - in this case on all requests from the
+trader service to both the account service and the stock service. The
+timeouts should be aggressive in order to fail quickly and avoid a
+queue building up. If the account service typically replies in 1
+second, a timeout of 0.5 seconds would result in virtually no trades
+being accepted. However, a timeout of 5 seconds might be too long as
+it takes too long to react to the account service failing. Thus, the
+timeouts must be set individually for each interaction between
+services and it should be such that most requests succeed when all
+services function normally and cascading failure is avoided when one
+or more services are failing.
  
 \subsection{Bulkheads}
 Timeouts are essential but they do not cover all cases. If a service
@@ -65,7 +65,7 @@ limited number of concurrent requests between two services. When the
 maximum number of concurrent requests is reached, all incoming
 requests are rejected and fail instantly. By doing this a request
 queue is never allowed to be created and the called services are
-protected from being overloaded.
+protected from being overloaded~\cite{avanza}.
 \\\\
 The drawback of this method is that the amount of rejected requests
 can become big if the number of allowed concurrent requests is too
