@@ -16,7 +16,7 @@ system and is comprised of three microservices:
   retrieved and updated.
 \item \textbf{The trader service} in which stock trades are carried
   out. When a trade is requested the account service is contacted to
-  get account data for the account in question  and the stocks service
+  get account data for the account in question  and the stock service
   is contacted to get the price of the stock in question. If the
   transaction is valid in terms of enough funds or stocks owned in the
   account to perform a trade, the account service is contacted once
@@ -25,9 +25,11 @@ system and is comprised of three microservices:
 \end{itemize}
 
 \subsection{Implementation}
-Each microservice is implemented as a REST
-API~\cite{fielding2000dissertation} in Python by use of the Flask
-framework~\cite{flask}. Data is stored in a Redis database~\cite{redis}.
+Each microservice is implemented as a \textit{REST
+API}\footnote{http://www.ics.uci.edu/~fielding/pubs/dissertation/rest\_arch\_style.htm}
+in Python by use of the \textit{Flask
+framework}\footnote{http://flask.pocoo.org/}. Data is stored in a \textit{Redis
+database}\footnote{https://redis.io}.
 \\\\
 All communication to and between the services are performed through
 HTTP GET and POST requests with JSON as the data format. The are five
@@ -113,7 +115,7 @@ implemented endpoints:
         \}
     \}
   }
-  if successfull or
+  if successful or
     \textit {
     \{
       success: False,
@@ -127,5 +129,4 @@ implemented endpoints:
 The implementation of this microservice architecture has been carried
 out with fault-tolerance in mind and thus only serves the purpose of
 showcasing fault-tolerance techniques. No form of authentication or
-security has been implemented, yielding a very artificial and
-unrealistic banking system.
+security has been implemented.

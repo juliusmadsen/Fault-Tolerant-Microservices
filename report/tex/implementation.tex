@@ -6,8 +6,9 @@ Section~\ref{sec:architecture}.
 
 \subsection{Timeouts}
 Implementing HTTP requests in Python is straightforward using the
-\textit{requests} library~\cite{requests} as shown in
-Listing~\ref{lst:requestnotimeout}.
+\textit{requests}
+library\footnote{http://docs.python-requests.org/en/master/} as shown
+in Listing~\ref{lst:requestnotimeout}.
 
 \begin{lstlisting} [
 	language=python,
@@ -21,7 +22,7 @@ In the example architecture all requests from the
 trader service to the account service and all requests from the trader
 service to the stock service must include timeouts. Neither the
 account service nor the stock service has any outgoing requests, so no
-timeouts are implemented in those.
+timeouts are implemented here.
 \\\\
 It is desirable to use the same timeout value for requests to the same
 service, so these are extracted into a configuration variable. Adding
@@ -45,12 +46,14 @@ requests.get("http://account:5001/account/" + str(accountId),
 The purpose of implementing bulkheds is to limit the number of
 concurrent requests from one service to another. Using semaphores is a
 clear way to accomplish this. In this implementation bounded
-semaphores from the Python threading module~\cite{pythonthreading} is used.
+semaphores from the Python threading
+module\footnote{https://docs.python.org/2/library/threading.html} is
+used.
 \\\\
 One semaphore must be created for each resource, so in the case of the
 trader service two semaphores are created - one for requests to the
 account service and one for requests to the stock service. The
-semaphore setup listed in Listing~\ref{lst:semaphoresetup}.
+semaphore setup is listed in Listing~\ref{lst:semaphoresetup}.
 
 \begin{lstlisting} [
 	language=python,
@@ -82,14 +85,19 @@ before the semaphore is released one or more times.
 \begin{lstlisting} [
 	language=python,
 	caption={Acquiring the account semaphore and making a request
-          to the account service. If the semaphore cannot be acquired
-          an error is raised and the request is rejected.},
+          to the account service if successful. If the semaphore
+          cannot be acquired an error is raised and the request is
+          rejected.},
 	breaklines=true,
 	label={lst:semaphoreuse}]
-account_sema.acquire()
-requests.get("http://account:5001/account/" + str(accountId),
+sema = account_sema.acquire(false)
+if sema:
+  requests.get("http://account:5001/account/" + str(accountId),
              timeout=request_timeout))
-account_sema.release()
+  account_sema.release()
+else:
+  # no threads available - throwing error!
+  ...
 \end{lstlisting}
 
 \subsection{Circuit Breaker}

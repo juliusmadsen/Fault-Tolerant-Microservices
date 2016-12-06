@@ -5,11 +5,11 @@ microservice as an independent unit as opposed to viewing it as part
 of a bigger system. In order to do so it is essential to design for
 failure. All interactions between two microservices must be handled
 with care. Assume microservice \emph{A} relies on microservice
-\emph{B}. Microservice \emph{A} must be able to handle if microservice
-\emph{B} is slow or not responding, and it should do so in a timely
+\emph{B}. Microservice \emph{A} must be able to react on microservice
+\emph{B} being slow or non responding, and it should do so in a timely
 manner.
 \\\\
-This section covers some mechanisms which can improve fault-tolerance in
+This section covers some mechanisms which can improve fault tolerance in
 microservice architectures. Their functionality and intended purpose will
 be covered in this section, and their implementation will be covered in 
 Section~\ref{sec:implementation}.
@@ -29,9 +29,9 @@ only one extra thread is acquired by one request to the trader
 service.
 \\\\
 If the account service is responding slowly, the trader service will
-become slow as well. As trade requests keep coming in an even greater
-pressure is applied to the account service which slows down even
-more. Eventually all threads from the thread pool are busy yielding an
+become slow as well. As trade requests keep coming in, an even greater
+pressure is applied to the account service which continues to slow
+down. Eventually all threads from the thread pool are busy, yielding an
 ever growing queue of incoming requests, slowing down both the account
 service and the trader service.
 \\\\
@@ -48,19 +48,19 @@ seconds would result in virtually no trades being accepted. However, a
 timeout of 5 seconds might be too long as it takes too long to react
 to the account service failing. Thus, the timeouts must be set
 individually for each interaction between services and it should be
-such that most requests succeed when all services are function
-normally and cascading failure is avoided when one or more services
-are failing.
+such that most requests succeed when all services function normally
+and cascading failure is avoided when one or more services are
+failing.
  
 \subsection{Bulkheads}
 Timeouts are essential but they do not cover all cases. If a service
 is consistently slow but not slow enough to be caught by the timeout,
-all threads get blocked once again and a request queue start building
+all threads get blocked once again and a request queue starts building
 up. Bulkheads can be implemented to avoid this.
 \\\\
 Bulkheads is a general technique where a process is granted access to
 only a limited amount of a specific resource. In case of
-fault-tolerant microservices it can be beneficial to only allow a
+fault tolerant microservices it can be beneficial to only allow a
 limited number of concurrent requests between two services. When the
 maximum number of concurrent requests is reached, all incoming
 requests are rejected and fail instantly. By doing this a request
@@ -128,7 +128,7 @@ persisting state in databases, the independent services can be replicated and
 function side-by-side, hereby splitting the system load. Which in many cases
 might also minimize errors, since overloading a service could cause faults.
 Beyond allowing a service to be scaled horizontally, replication also allows
-for increased fault-tolerance, since the failure of a single instance does not
+for increased fault tolerance, since the failure of a single instance does not
 necessarily result in breaking the system, since other identical replicated
 services are still running. The key goal being that at least one instance of the
 service is alive, reachable and well-behaved.
@@ -147,7 +147,7 @@ In case of the demo system showcased in this report, a simple strategy of
 keeping services state-less and using a shared transaction-safe database will
 be applied, see Section~\ref{sec:implementation}.
 \newline\newline
-Replication can enhance fault-tolerance even more, if it is applied on a cluster
+Replication can enhance fault tolerance even more, if it is applied on a cluster
 of servers. Replicating services across a cluster, spreading replicas to
 different nodes, lets the system handle sudden disconnects or downtime on
 individual nodes. This mentality can even be applied on datacenters and the

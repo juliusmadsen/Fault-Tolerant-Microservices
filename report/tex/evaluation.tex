@@ -1,9 +1,10 @@
 \section{Evaluation}
 Fault tolerance techniques can be implemented for different
-purposes. Some microservices want the biggest possible thoughput at
-the cost of an increased number of failure, others want the highest
-possible success rate and accept low performance. For many purposes it
-can be desirable to aim somewhere in between these two extremes.
+purposes. For some microservices the biggest possible thoughput is
+wanted at the cost of an increased number of failure, others want
+the highest possible success rate and accept low performance. For many
+purposes it can be desirable to aim somewhere in between these two
+extremes.
 \\\\
 Pretend that the fictive bank behind the implemented trading service
 charges a fee for each succesful trade. Given the number of processed
@@ -26,15 +27,15 @@ constant flow of 50 concurrent trade requests. The aim of the bank is
 to process these requests in a way that optimises their profit.
 \\\\
 The system is tested by using the Apache HTTP server benchmarking
-tool~\cite{apache} to generate 5000 trade request to the trading
-service at a concurrency level of 50.
+tool\footnote{https://github.com/Netflix/Hystrix} to generate 5000
+trade request to the trading service at a concurrency level of 50.
 
 \subsection{Timeouts}
 Real world applications are unstable due to slow networks and
 databases among many other things. To simulate some kind of
 unstability, random sleeps are introduced to the GET method in the
 account service. The implementation is shown in
-Listing~\ref{pythonsleeps}. This introduces a not completely
+Listing~\ref{lst:pythonsleeps}. This introduces a not completely
 unrealistic behaviour of a real world microservice, where the response
 time is generally noisy and some requests are responded to slowly.
 \begin{lstlisting} [
@@ -43,7 +44,7 @@ time is generally noisy and some requests are responded to slowly.
           4 percent of the requests will sleep for 5 seconds and 18
           percent of the requests will sleep for 1
           second. Furthermore, all requests sleep for a random value
-          between 0 and 0,1 seconds.},
+          between 0 and 0.1 seconds.},
 	breaklines=true,
 	label={lst:pythonsleeps}]
 lucky = random.randint(0,100) 
@@ -58,8 +59,7 @@ sleep_duration = random.randint(0,10)/100.0
 The benchmark test was performed on the trader service with the
 results displayed in Table~\ref{table:baselinetest}. The profit in the
 base case is 67.51 successful requests per second and this is is the
-number to be maximised.
-
+number to be maximised.\\\\
 \begin{table}[]
 \centering
 \caption{Baseline performance of trader service with no fault
@@ -75,14 +75,14 @@ Requests/seq & Success & Profit/sec & 50\% & 75\% & 90\% & 95\% & 100\% \\ \hlin
 \end{tabular}
 \end{table}
 Looking at Table~\ref{table:baselinetest} it shows that the slowest
-ten percent of the requests are dramatically more slow than the rest
+ten percent of the requests are dramatically slower than the rest
 of the requests. Based on this it seems sensible to set a first
 attempt maximum timeout of 2 seconds, which should exclude somewhere
-between 5 to 10 percent of the requests with the benefit of not
-slowing down the rest of the requests. The results of doing so are
-listed in Table~\ref{table:timeouttest2sec} which shows 85.86
-successful requests per second yielding a profit increase of 27\%.
-
+between 5 to 10 percent of the requests, adding room to throughput
+more requests. The results of doing so are listed in
+Table~\ref{table:timeouttest2sec} which shows 85.86 successful
+requests per second yielding a profit increase of 27\% compared to the
+base case.
 \begin{table}[]
 \centering
 \caption{Performance of trader service with timeout set to 2 seconds.}
@@ -149,5 +149,6 @@ for the topics presented here.
 \\\\
 An alternative solution to test bulkheads would be to simulate thread
 exhaustion by keeping track of the number of simultaneous requests but
-this would again be very contrived and not hardly reflect the effects
-of implementing bulkheads in a real microservice architecture.
+this would again be very contrived and possibly not realistically
+reflect the effects of implementing bulkheads in a real microservice
+architecture.
