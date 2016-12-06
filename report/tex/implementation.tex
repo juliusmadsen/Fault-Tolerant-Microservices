@@ -4,6 +4,46 @@ This section will cover the implementation of the fault-tolerance mechanisms
 covered in Section~\ref{sec:mechanisms} on the architecture described in
 Section~\ref{sec:architecture}.
 
+\subsection{Timeouts}
+Implementing HTTP requests in Python is straightforward using the
+\textit{requests} library~\cite{requests} as shown in
+Listing~\ref{lst:requestnotimeout}.
+
+\begin{lstlisting} [
+	language=python,
+	caption={GET request from the trader service to the account
+          service without timeout.},
+	breaklines=true,
+	label={lst:requestnotimeout}]
+requests.get("http://account:5001/account/" + str(accountId))
+\end{lstlisting}
+
+In the example architecture all requests from the
+trader service to the account service and all requests from the trader
+service to the stock service must include timeouts. Neither the
+account service nor the stock service has any outgoing requests, so no
+timeouts are implemented in those.
+\\\\
+It is desirable to use the same timeout value for requests to the same
+service, so these are extracted into a configuration variable. Adding
+timeouts simply requires an additional argument to the request with
+the desired timeout resulting in requests on the form as seen in
+Listing~\ref{lst:requesttimeout}.
+
+\begin{lstlisting} [
+	language=python,
+	caption={GET request from the trader service to the account
+          service with timeout. The variable \textit{account\_timeout}
+          holds a float denoting the number of seconds before the
+          request times out.},
+	breaklines=true,
+	label={lst:requesttimeout}]
+requests.get("http://account:5001/account/" + str(accountId),
+             timeout=account_timeout))
+\end{lstlisting}
+
+\subsection{Bulkheads}
+
 \subsection{Circuit Breaker}
 The circuit breaker has been implemented as a state-machine, with the
 circuits state being stored in a local variable and events being functions.
