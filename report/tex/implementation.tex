@@ -17,7 +17,6 @@ Listing~\ref{lst:requestnotimeout}.
 	label={lst:requestnotimeout}]
 requests.get("http://account:5001/account/" + str(accountId))
 \end{lstlisting}
-
 In the example architecture all requests from the
 trader service to the account service and all requests from the trader
 service to the stock service must include timeouts. Neither the
@@ -43,6 +42,55 @@ requests.get("http://account:5001/account/" + str(accountId),
 \end{lstlisting}
 
 \subsection{Bulkheads}
+The purpose of implementing bulkheds is to limit the number of
+concurrent requests from one service to another. Using semaphores is a
+clear way to accomplish this. In this implementation bounded
+semaphores from the Python threading module~\cite{pythonthreading} is used.
+\\\\
+One semaphore must be created for each resource, so in the case of the
+trader service two semaphores are created - one for requests to the
+account service and one for requests to the stock service. The
+semaphore setup listed in Listing~\ref{lst:semaphoresetup}.
+
+\begin{lstlisting} [
+	language=python,
+	caption={Initialising semaphores to be used in the trader
+          service. \textit{account\_sema} is the semaphore used to
+          limit access to requests to the account service and
+          \textit{stock\_sema} is the semaphore used to limit access
+          to requests to the stock service. Each semaphore is
+          initalised in this example to accept a maximum of 100
+          concurrent requests.},
+	breaklines=true,
+	label={lst:semaphoresetup}]
+account_max_connections = 100
+stock_max_connections = 100
+account_sema = threading.BoundedSemaphore(value=account_max_connections)
+stock_sema = threading.BoundedSemaphore(value=stock_max_connections)
+\end{lstlisting}
+For the bulkheads to function correctly the account semaphore must
+always be acquired before making a request to the account service and
+accordingly for requests to the stock service as displayed in
+Listing~\ref{lst:semaphoreuse}. In the case of full capacity load
+where the maximum number of allowed concurrent requests are active,
+the semaphore cannot be acquired. This results in an error being
+thrown and the request is rejected. For the trader service this means
+that the requested trade is refused, but this now happens instantly
+with no risk of the request hanging. No more requests are accepted
+before the semaphore is released one or more times.
+
+\begin{lstlisting} [
+	language=python,
+	caption={Acquiring the account semaphore and making a request
+          to the account service. If the semaphore cannot be acquired
+          an error is raised and the request is rejected.},
+	breaklines=true,
+	label={lst:semaphoreuse}]
+account_sema.acquire()
+requests.get("http://account:5001/account/" + str(accountId),
+             timeout=request_timeout))
+account_sema.release()
+\end{lstlisting}
 
 \subsection{Circuit Breaker}
 The circuit breaker has been implemented as a state-machine, with the
